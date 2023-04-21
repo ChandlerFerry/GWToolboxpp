@@ -28,6 +28,7 @@
 #include <Windows/TravelWindow.h>
 
 #include <Color.h>
+#include <resource.h>
 #include <Modules/DialogModule.h>
 #include <GWCA/Context/PreGameContext.h>
 #include <GWCA/Managers/QuestMgr.h>
