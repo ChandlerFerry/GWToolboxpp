@@ -58,7 +58,7 @@ public:
         return instance;
     }
     static DoorObject* GetDoor(uint32_t object_id) {
-        std::map<uint32_t, DoorObject*>::iterator it = Instance().doors.find(object_id);
+        const auto it = Instance().doors.find(object_id);
         if (it != Instance().doors.end())
             return it->second;
         DoorObject* d = new DoorObject(object_id);

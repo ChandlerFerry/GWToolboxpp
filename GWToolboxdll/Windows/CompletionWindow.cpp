@@ -628,7 +628,7 @@ void HeroUnlock::CheckProgress(const std::wstring& player_name) {
     if (!skills.contains(player_name))
         return;
     auto& heroes = skills.at(player_name)->heroes;
-    is_completed = bonus = std::ranges::find(heroes, static_cast<uint32_t>(skill_id)) != heroes.end();
+    is_completed = bonus = std::ranges::contains(heroes, std::to_underlying(skill_id));
 }
 const char* HeroUnlock::Name() {
     return hero_names[(uint32_t)skill_id];
@@ -2309,7 +2309,7 @@ then press "Examine the Monument to Devotion.")");
                 }
             }
             if (ready) {
-                std::sort(minipets.begin(), minipets.end(), [](MinipetAchievement* a, MinipetAchievement* b) { return strcmp(a->Name(), b->Name()) < 0;  });
+                std::ranges::sort(minipets, [](MinipetAchievement* a, MinipetAchievement* b) { return strcmp(a->Name(), b->Name()) < 0;  });
                 minipets_sorted = true;
             }
         }

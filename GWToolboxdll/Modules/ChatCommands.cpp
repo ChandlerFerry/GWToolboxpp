@@ -371,7 +371,7 @@ namespace {
             const size_t buf_size = 16 * options.size(); // Roughly 16 chars per option label
             wchar_t* buffer = new wchar_t[buf_size];
             int offset = 0;
-            for (auto it = options.begin(); it != options.end();it++) {
+            for (auto it = options.begin(); it != options.end(); it++) {
                 int written = swprintf(&buffer[offset], offset - buf_size, offset > 0 ? L", %s" : L"%s", it->first.c_str());
                 ASSERT(written != -1);
                 offset += written;
@@ -383,13 +383,12 @@ namespace {
             return Log::Error(pref_syntax);
 
         // Find preference by name
-        const PrefMapCommand* pref = 0;
         const auto found = options.find(argv[1]);
         if(found == options.end())
             return Log::Error(pref_syntax);
-        pref = &found->second;
+        const PrefMapCommand* pref = &found->second;
 
-        pref->preference_callback(cmd, argc, argv,pref->preference_id);
+        pref->preference_callback(cmd, argc, argv, pref->preference_id);
 
     }
 
@@ -597,7 +596,7 @@ void ChatCommands::DrawSettingInternal() {
         preview = "Remove title";
         break;
     default:
-        const auto selected = std::ranges::find_if(title_names, [&](auto* it) { return (uint32_t)it->title == default_title_id; });
+        const auto selected = std::ranges::find_if(title_names, [&](auto* it) { return std::to_underlying(it->title) == default_title_id; });
 
         if (selected != title_names.end()) {
             preview = (*selected)->name.string();
@@ -618,7 +617,7 @@ void ChatCommands::DrawSettingInternal() {
         }
         for (auto* it : title_names) {
             if (ImGui::Selectable(it->name.string().c_str(), (uint32_t)it->title == default_title_id)) {
-                default_title_id = (uint32_t)it->title;
+                default_title_id = std::to_underlying(it->title);
             }
         }
         ImGui::EndCombo();

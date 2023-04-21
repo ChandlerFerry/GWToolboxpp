@@ -38,28 +38,28 @@
 
 namespace {
     GW::CharContext* GetCharContext() {
-        auto g = GW::GetGameContext();
+        const auto g = GW::GetGameContext();
         return g ? g->character : 0;
     }
 
     GW::PartyInfo* GetPlayerParty() {
-        auto g = GW::GetGameContext();
+        const auto g = GW::GetGameContext();
         if (!g) return 0;
-        auto c = g->party;
+        const auto c = g->party;
         if (!c) return 0;
         return c->player_party;
     }
     uint32_t GetPlayerNumber() {
-        auto c = GetCharContext();
+        const auto c = GetCharContext();
         return c ? c->player_number : 0;
     }
     const wchar_t* GetPlayerName() {
-        auto c = GetCharContext();
+        const auto c = GetCharContext();
         return c ? c->player_name : 0;
     }
     const wchar_t* GetAccountEmail() {
-        auto c = GetCharContext();
-        wchar_t* email = c ? c->player_email : 0;
+        const auto c = GetCharContext();
+        const wchar_t* email = c ? c->player_email : 0;
         if (email && !email[0])
             email = 0;
         return email;
@@ -69,11 +69,11 @@ namespace {
         GW::PartyInfo* player_party = GetPlayerParty();
         if (!player_party || !player_party->players.valid() || player_party->players.size() < 2)
             return 0;
-        uint32_t player_number = GetPlayerNumber();
+        const uint32_t player_number = GetPlayerNumber();
         for (size_t i = 0; i < player_party->players.size(); i++) {
             if (player_party->players[i].login_number == player_number)
                 continue;
-            auto player = GW::PlayerMgr::GetPlayerByID(player_party->players[i].login_number);
+            const auto player = GW::PlayerMgr::GetPlayerByID(player_party->players[i].login_number);
             if (!player)
                 continue;
             return player->name;
@@ -88,7 +88,7 @@ namespace {
         return GW::Map::GetInstanceType() != GW::Constants::InstanceType::Loading && GW::Map::GetIsMapLoaded() && GW::Agents::GetPlayer();
     }
     bool GetIsCharSelectReady() {
-        GW::PreGameContext* pgc = GW::GetPreGameContext();
+        const GW::PreGameContext* pgc = GW::GetPreGameContext();
         if (!pgc || !pgc->chars.valid())
             return false;
         uint32_t ui_state = 10;
@@ -143,14 +143,11 @@ namespace {
     std::wstring LowerCaseRemovePunct(std::wstring in) {
         return GuiUtils::ToLower(GuiUtils::RemovePunctuation(in));
     }
-    std::wstring LowerCaseRemovePunct(std::string in) {
-        return LowerCaseRemovePunct(GuiUtils::StringToWString(in));
-    }
 
     std::vector<std::wstring> exclude_charnames_from_reroll_cmd;
     char excluded_char_add_buf[20] = { 0 };
     bool IsExcludedFromReroll(const wchar_t* player_name) {
-        return std::ranges::find(exclude_charnames_from_reroll_cmd, LowerCaseRemovePunct(player_name)) != exclude_charnames_from_reroll_cmd.end();
+        return std::ranges::contains(exclude_charnames_from_reroll_cmd, LowerCaseRemovePunct(player_name));
     }
     void DrawExcludedCharacters() {
         ImGui::Spacing();
@@ -160,7 +157,7 @@ namespace {
                 ImGui::PushID(i);
                 ImGui::TextUnformatted(GuiUtils::WStringToString(excluded).c_str());
                 ImGui::SameLine();
-                bool clicked = ImGui::SmallButton("X");
+                const bool clicked = ImGui::SmallButton("X");
                 ImGui::PopID();
                 if(clicked) {
                     exclude_charnames_from_reroll_cmd.erase(exclude_charnames_from_reroll_cmd.begin() + i);
@@ -168,7 +165,7 @@ namespace {
                 }
             }
             if (ImGui::InputText("###add_character_to_exclude", excluded_char_add_buf, _countof(excluded_char_add_buf), ImGuiInputTextFlags_EnterReturnsTrue)) {
-                auto charname_w = GuiUtils::StringToWString(excluded_char_add_buf);
+                const auto charname_w = GuiUtils::StringToWString(excluded_char_add_buf);
                 if (charname_w.length() && !IsExcludedFromReroll(charname_w.c_str())) {
                     exclude_charnames_from_reroll_cmd.push_back(LowerCaseRemovePunct(charname_w));
                 }
@@ -188,7 +185,7 @@ void RerollWindow::Draw(IDirect3DDevice9* pDevice) {
             ImGui::OpenPopup("##reroll_confirm_popup");
             if (ImGui::BeginPopupModal("##reroll_confirm_popup", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
                 ImGui::Text("You're currently in an explorable area.\nAre you sure you want to change character?");
-                bool check_key = TIMER_DIFF(reroll_stage_set) > 500; // Avoid enter key being read from last press
+                const bool check_key = TIMER_DIFF(reroll_stage_set) > 500; // Avoid enter key being read from last press
                 if (ImGui::Button("Yes", ImVec2(120, 0)) || (check_key && ImGui::IsKeyPressed(ImGuiKey_Enter))) {
                     reroll_stage = PendingLogout;
                     ImGui::CloseCurrentPopup();
@@ -231,11 +228,11 @@ void RerollWindow::Draw(IDirect3DDevice9* pDevice) {
             buf = GuiUtils::WStringToString(player_name);
             if ((i % 2) != 0)
                 ImGui::SameLine();
-            if (ImGui::IconButton(buf.c_str(), *Resources::GetProfessionIcon((GW::Constants::Profession)profession),btn_dim)) {
-                bool _same_map = travel_to_same_location_after_rerolling;
+            if (ImGui::IconButton(buf.c_str(), *Resources::GetProfessionIcon(static_cast<GW::Constants::Profession>(profession)),btn_dim)) {
+                const bool _same_map = travel_to_same_location_after_rerolling;
                 bool _same_party = travel_to_same_location_after_rerolling && rejoin_party_after_rerolling;
                 if (rejoin_party_after_rerolling && !_same_party) {
-                    GW::PartyInfo* p = GetPlayerParty();
+                    const GW::PartyInfo* p = GetPlayerParty();
                     if (p && p->players.size() > 1)
                         _same_party = true;
                 }
@@ -264,7 +261,7 @@ void RerollWindow::CmdReroll(const wchar_t* message, int argc, LPWSTR*) {
         Log::Error("Failed to get available characters");
         return;
     }
-    std::wstring character_or_profession = GuiUtils::ToLower(GetRemainingArgsWstr(message,1));
+    const std::wstring character_or_profession = GuiUtils::ToLower(GetRemainingArgsWstr(message,1));
     const wchar_t* to_find[] = {
         L"",
         L"warrior",
@@ -332,7 +329,7 @@ void RerollWindow::Initialize() {
         GW::Hook::EnableHooks(SetOnlineStatus_Func);
     }
 
-    uintptr_t address = GW::Scanner::Find("\x8b\x35\x00\x00\x00\x00\x57\x69\xF8\x84\x00\x00\x00", "xx????xxxxxxx", 0x2);
+    const uintptr_t address = GW::Scanner::Find("\x8b\x35\x00\x00\x00\x00\x57\x69\xF8\x84\x00\x00\x00", "xx????xxxxxxx", 0x2);
     if (address) {
         available_chars_ptr = *(GW::Array<AvailableCharacterInfo>**)address;
     }
@@ -345,11 +342,11 @@ void RerollWindow::Update(float) {
         auto& chars = GW::GetPreGameContext()->chars;
         const wchar_t* email = GetAccountEmail();
         if (email) {
-            auto found = account_characters.find(email);
+            const auto found = account_characters.find(email);
             if (found != account_characters.end() && found->second) {
                 found->second->clear();
             }
-            for (auto& p : chars) {
+            for (const auto& p : chars) {
                 AddAvailableCharacter(email, p.character_name);
             }
             check_available_chars = false;
@@ -362,7 +359,7 @@ void RerollWindow::Update(float) {
     GW::PreGameContext* pgc = GW::GetPreGameContext();
     switch (reroll_stage) {
         case PendingLogout: {
-            uint32_t logout[] = {0, 0};
+            const uint32_t logout[] = {0, 0};
             GW::UI::SendUIMessage(GW::UI::UIMessage::kLogout, (void*)logout);
             reroll_stage = WaitingForCharSelect;
             reroll_timeout = (reroll_stage_set = TIMER_INIT()) + 10000;
@@ -394,7 +391,7 @@ void RerollWindow::Update(float) {
                 return;
             if (pgc->index_1 == reroll_index_current)
                 return; // Not moved yet
-            HWND h = GW::MemoryMgr::GetGWWindowHandle();
+            const HWND h = GW::MemoryMgr::GetGWWindowHandle();
             if (pgc->index_1 == reroll_index_needed) {
                 // Play
                 SendMessage(h, WM_KEYDOWN, 0x50, 0x00190001);
@@ -430,9 +427,9 @@ void RerollWindow::Update(float) {
                             RerollFailed(L"Map isn't unlocked");
                             return;
                         }
-                        reroll_scroll_from_map_id = (uint32_t)GetScrollableOutpostForEliteArea(map_id);
+                        reroll_scroll_from_map_id = static_cast<uint32_t>(GetScrollableOutpostForEliteArea(map_id));
                         if (reroll_scroll_from_map_id) {
-                            if (!GW::Map::GetIsMapUnlocked((GW::Constants::MapID)reroll_scroll_from_map_id)) {
+                            if (!GW::Map::GetIsMapUnlocked(static_cast<GW::Constants::MapID>(reroll_scroll_from_map_id))) {
                                 RerollFailed(L"No scrollable outpost unlocked");
                                 return;
                             }
@@ -440,8 +437,8 @@ void RerollWindow::Update(float) {
                                 RerollFailed(L"No scroll available for elite area");
                                 return;
                             }
-                            if (GW::Map::GetMapID() != (GW::Constants::MapID)reroll_scroll_from_map_id) {
-                                GW::Map::Travel((GW::Constants::MapID)reroll_scroll_from_map_id, 0, region_id, language_id);
+                            if (GW::Map::GetMapID() != static_cast<GW::Constants::MapID>(reroll_scroll_from_map_id)) {
+                                GW::Map::Travel(static_cast<GW::Constants::MapID>(reroll_scroll_from_map_id), 0, region_id, language_id);
                             }
 
                             reroll_stage = WaitForScrollableOutpost;
@@ -462,9 +459,9 @@ void RerollWindow::Update(float) {
             return;
         }
         case WaitForScrollableOutpost: {
-            if (!GetIsMapReady() || GW::Map::GetMapID() != (GW::Constants::MapID)reroll_scroll_from_map_id)
+            if (!GetIsMapReady() || GW::Map::GetMapID() != static_cast<GW::Constants::MapID>(reroll_scroll_from_map_id))
                 return;
-            GW::Item* scroll = GetScrollItemForEliteArea(map_id);
+            const GW::Item* scroll = GetScrollItemForEliteArea(map_id);
             if (!scroll) {
                 RerollFailed(L"No scroll available for elite area");
                 return;
@@ -527,7 +524,7 @@ void RerollWindow::AddAvailableCharacter(const wchar_t* email, const wchar_t* ch
 }
 bool RerollWindow::IsInMap(bool include_district) {
     if (guild_hall_uuid) {
-        GW::Guild* current_location = GW::GuildMgr::GetCurrentGH();
+        const GW::Guild* current_location = GW::GuildMgr::GetCurrentGH();
         return current_location && memcmp(&current_location->key, guild_hall_uuid, sizeof(*guild_hall_uuid)) == 0;
     }
     return GW::Map::GetMapID() == map_id && (!include_district || district_id == 0 || GW::Map::GetDistrict() == district_id) && GW::Map::GetRegion() == region_id && GW::Map::GetLanguage() == language_id;
@@ -539,7 +536,7 @@ void RerollWindow::RerollSuccess() {
     }
 }
 bool RerollWindow::IsCharSelectReady() {
-    GW::PreGameContext* pgc = GW::GetPreGameContext();
+    const GW::PreGameContext* pgc = GW::GetPreGameContext();
     if (!pgc || !pgc->chars.valid())
         return false;
     uint32_t ui_state = 10;
@@ -565,7 +562,7 @@ void RerollWindow::RerollFailed(const wchar_t* reason) {
     reroll_timeout = TIMER_INIT() + 1000;
     reroll_stage = PendingLogout;
 }
-bool RerollWindow::Reroll(wchar_t* character_name, GW::Constants::MapID _map_id) {
+bool RerollWindow::Reroll(const wchar_t* character_name, GW::Constants::MapID _map_id) {
     if (!Reroll(character_name, true, false))
         return false;
     map_id = _map_id;
@@ -576,7 +573,7 @@ bool RerollWindow::Reroll(wchar_t* character_name, GW::Constants::MapID _map_id)
     district_id = 0;
     return true;
 }
-bool RerollWindow::Reroll(wchar_t* character_name, bool _same_map, bool _same_party) {
+bool RerollWindow::Reroll(const wchar_t* character_name, bool _same_map, bool _same_party) {
     reroll_stage = None;
     reverting_reroll = false;
     failed_message = nullptr;
@@ -611,9 +608,9 @@ bool RerollWindow::Reroll(wchar_t* character_name, bool _same_map, bool _same_pa
     online_status = GW::FriendListMgr::GetMyStatus();
     if (guild_hall_uuid) {
         delete[] guild_hall_uuid;
-        guild_hall_uuid = 0;
+        guild_hall_uuid = nullptr;
     }
-    GW::Guild* current_guild_hall = GW::GuildMgr::GetCurrentGH();
+    const GW::Guild* current_guild_hall = GW::GuildMgr::GetCurrentGH();
     if (current_guild_hall) {
         guild_hall_uuid = new uint32_t[4];
         memcpy(guild_hall_uuid, &current_guild_hall->key, sizeof(current_guild_hall->key));
@@ -628,7 +625,7 @@ void RerollWindow::LoadSettings(ToolboxIni* ini) {
     ToolboxWindow::LoadSettings(ini);
     ToolboxIni::TNamesDepend keys;
     if (ini->GetAllKeys("RerollWindow_AvailableChars", keys)) {
-        for (auto& it : keys) {
+        for (const auto& it : keys) {
             std::wstring charname_ws = GuiUtils::StringToWString(it.pItem);
             std::string email_s = ini->GetValue("RerollWindow_AvailableChars", it.pItem, "");
             if (email_s.empty()) continue;
@@ -655,7 +652,7 @@ void RerollWindow::SaveSettings(ToolboxIni* ini) {
     ToolboxWindow::SaveSettings(ini);
     for (const auto& it : account_characters) {
         std::string email_s = GuiUtils::WStringToString(it.first);
-        auto chars = it.second;
+        const auto chars = it.second;
         for (auto it2 = chars->begin(); it2 != chars->end(); it2++) {
             std::string charname_s = GuiUtils::WStringToString(*it2);
             if (charname_s.empty()) continue;
@@ -666,7 +663,7 @@ void RerollWindow::SaveSettings(ToolboxIni* ini) {
     SAVE_BOOL(rejoin_party_after_rerolling);
     SAVE_BOOL(return_on_fail);
 
-    std::string excluded_charnames_ini = "";
+    std::string excluded_charnames_ini;
     for (auto& excluded : exclude_charnames_from_reroll_cmd) {
         if (excluded_charnames_ini.length())
             excluded_charnames_ini += ',';

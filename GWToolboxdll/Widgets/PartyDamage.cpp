@@ -343,7 +343,7 @@ float PartyDamage::GetPartOfTotal(const uint32_t dmg) const {
 void PartyDamage::WritePartyDamage() {
     std::vector<size_t> idx(MAX_PLAYERS);
     for (size_t i = 0; i < MAX_PLAYERS; ++i) idx[i] = i;
-    sort(idx.begin(), idx.end(), [this](size_t i1, size_t i2) {
+    std::ranges::sort(idx, [this](size_t i1, size_t i2) {
         return damage[i1].damage > damage[i2].damage;
     });
 

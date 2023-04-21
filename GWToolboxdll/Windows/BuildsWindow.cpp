@@ -851,7 +851,7 @@ void BuildsWindow::LoadFromFile() {
     }
     // Sort by name
     if (order_by_name) {
-        sort(teambuilds.begin(), teambuilds.end(), [](TeamBuild a, TeamBuild b) {
+        std::ranges::sort(teambuilds, [](TeamBuild a, TeamBuild b) {
             return _stricmp(a.name, b.name) < 0;
         });
     }

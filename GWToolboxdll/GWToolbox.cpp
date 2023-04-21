@@ -126,9 +126,8 @@ namespace {
 
     std::vector<ToolboxModule*> modules_terminating{};
     void ReorderModules(std::vector<ToolboxModule*>& modules) {
-        std::sort(
-            modules.begin(),
-            modules.end(),
+        std::ranges::sort(
+            modules,
             [](const ToolboxModule* lhs, const ToolboxModule* rhs) {
                 return std::string(lhs->SettingsName()).compare(rhs->SettingsName()) < 0;
             });
@@ -152,15 +151,14 @@ namespace {
             ToolboxIni* tmp = new ToolboxIni(false, false, false);
             ASSERT(tmp->LoadIfExists(full_path) == SI_OK);
             tmp->location_on_disk = full_path;
-            if (inifile)
-                delete inifile;
+            delete inifile;
             inifile = tmp;
         }
         return inifile;
     }
 
     bool ToggleTBModule(ToolboxModule& m, std::vector<ToolboxModule*>& vec, bool enable) {
-        auto found = std::ranges::find(vec.begin(), vec.end(), &m);
+        const auto found = std::ranges::find(vec, &m);
         if (found != vec.end()) {
             // Module found
             if (enable)
@@ -172,19 +170,18 @@ namespace {
             ReorderModules(vec);
             return false;
         }
-        else {
-            // Module not found
-            if (!enable)
-                return false;
-            auto is_terminating = std::ranges::find(modules_terminating.begin(), modules_terminating.end(), &m);
-            if (is_terminating != modules_terminating.end())
-                return false; // Not finished terminating
-            vec.push_back(&m);
-            m.Initialize();
-            m.LoadSettings(OpenSettingsFile());
-            ReorderModules(vec);
-            return true; // Added successfully
-        }
+
+        // Module not found
+        if (!enable)
+            return false;
+        const auto is_terminating = std::ranges::contains(modules_terminating, &m);
+        if (is_terminating)
+            return false; // Not finished terminating
+        vec.push_back(&m);
+        m.Initialize();
+        m.LoadSettings(OpenSettingsFile());
+        ReorderModules(vec);
+        return true; // Added successfully
     }
 
 
@@ -214,7 +211,7 @@ const std::vector<ToolboxWidget*>& GWToolbox::GetWidgets()
 void UpdateEnabledWidgetVectors(ToolboxModule* m, bool added) {
 
     auto UpdateVec = [added](std::vector<void*>& vec, void* m) {
-        auto found = std::ranges::find(vec.begin(), vec.end(), m);
+        const auto found = std::ranges::find(vec, m);
         if (added) {
             if (found == vec.end()) {
                 vec.push_back(m);
@@ -242,17 +239,17 @@ void UpdateEnabledWidgetVectors(ToolboxModule* m, bool added) {
 }
 bool GWToolbox::IsInitialized() const { return initialized; }
 bool GWToolbox::ToggleModule(ToolboxWidget& m, bool enable) {
-    bool added = ToggleTBModule(m, (std::vector<ToolboxModule*>&)widgets_enabled, enable);
+    const bool added = ToggleTBModule(m, (std::vector<ToolboxModule*>&)widgets_enabled, enable);
     UpdateEnabledWidgetVectors(&m, added);
     return added;
 }
 bool GWToolbox::ToggleModule(ToolboxWindow& m, bool enable) {
-    bool added = ToggleTBModule(m, (std::vector<ToolboxModule*>&)windows_enabled, enable);
+    const bool added = ToggleTBModule(m, (std::vector<ToolboxModule*>&)windows_enabled, enable);
     UpdateEnabledWidgetVectors(&m, added);
     return added;
 }
 bool GWToolbox::ToggleModule(ToolboxModule& m, bool enable) {
-    bool added = ToggleTBModule(m, modules_enabled, enable);
+    const bool added = ToggleTBModule(m, modules_enabled, enable);
     UpdateEnabledWidgetVectors(&m, added);
     return added;
 }
@@ -672,16 +669,16 @@ void GWToolbox::Update(GW::HookStatus *)
         && imgui_initialized
         && !must_self_destruct) {
 
-        for (auto m : all_modules_enabled) {
+        for (const auto m : all_modules_enabled) {
             m->Update(delta_f);
         }
 
     }
 
-    for (auto m : modules_terminating) {
+    for (const auto m : modules_terminating) {
         if (m->CanTerminate()) {
             m->Terminate();
-            auto found = std::ranges::find(modules_terminating.begin(), modules_terminating.end(), m);
+            const auto found = std::ranges::find(modules_terminating, m);
             ASSERT(found != modules_terminating.end());
             modules_terminating.erase(found);
             break;

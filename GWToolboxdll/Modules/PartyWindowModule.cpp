@@ -241,8 +241,7 @@ namespace {
             return false;
         if (a->GetIsDead() || a->GetIsDeadByTypeMap() || a->allegiance == GW::Constants::Allegiance::Enemy)
             return false; // Dont add dead NPCs.
-        const auto it = std::ranges::find(allies_added_to_party, a->agent_id);
-        if (it != allies_added_to_party.end())
+        if (std::ranges::contains(allies_added_to_party, a->agent_id))
             return false;
         return ShouldAddAgentToPartyWindow(0x20000000u | a->player_number);
     }
@@ -375,19 +374,17 @@ void PartyWindowModule::Initialize() {
     // Remove certain NPCs from party window when dead
     GW::StoC::RegisterPacketCallback<GW::Packet::StoC::AgentState>(
         &AgentState_Entry,
-        [&](GW::HookStatus* status, GW::Packet::StoC::AgentState* pak) -> void {
-            UNREFERENCED_PARAMETER(status);
+        [&](GW::HookStatus*, GW::Packet::StoC::AgentState* pak) -> void {
             if (!add_npcs_to_party_window || pak->state != 16)
                 return; // Not dead.
-            if (std::ranges::find(allies_added_to_party, pak->agent_id) == allies_added_to_party.end())
+            if (!std::ranges::contains(allies_added_to_party, pak->agent_id))
                 return; // Not added via toolbox
             pending_remove.push(pak->agent_id);
         });
     // Remove certain NPCs from party window when despawned
     GW::StoC::RegisterPacketCallback<GW::Packet::StoC::AgentRemove>(
         &AgentRemove_Entry,
-        [&](GW::HookStatus* status, GW::Packet::StoC::AgentRemove* pak) -> void {
-            UNREFERENCED_PARAMETER(status);
+        [&](GW::HookStatus*, GW::Packet::StoC::AgentRemove* pak) -> void {
             if (remove_dead_imperials) {
                 if (const auto* agent = GW::Agents::GetAgentByID(pak->agent_id); agent && agent->GetAsAgentLiving() && agent->GetAsAgentLiving()->GetIsDead()) {
                     const auto player_number = agent->GetAsAgentLiving()->player_number;
@@ -395,8 +392,7 @@ void PartyWindowModule::Initialize() {
                         player_number == GW::Constants::ModelID::SummoningStone::ImperialQuiveringBlade ||
                         player_number == GW::Constants::ModelID::SummoningStone::ImperialTripleChop ||
                         player_number == GW::Constants::ModelID::SummoningStone::ImperialBarrage) {
-                        if (std::ranges::find(removed_canthans, pak->agent_id) ==
-                            removed_canthans.end()) {
+                        if (!std::ranges::contains(removed_canthans, pak->agent_id)) {
                             pending_remove.push(pak->agent_id);
                             removed_canthans.push_back(pak->agent_id);
                         }
@@ -460,8 +456,8 @@ void PartyWindowModule::Initialize() {
         [&](GW::HookStatus*, GW::Packet::StoC::AgentAdd* pak) -> void {
             if (!add_elite_skill_to_summons) return;
             if (pak->type != 1) return; // Not a living agent.
-            uint32_t player_number = (pak->agent_type ^ 0x20000000);
-            auto summon_elite = summon_elites.find(player_number);
+            const uint32_t player_number = pak->agent_type ^ 0x20000000;
+            const auto summon_elite = summon_elites.find(player_number);
             if (summon_elite == summon_elites.end()) return;
             if (summon_elite->second == GW::Constants::SkillID::No_Skill) return;
             summons_pending.push({pak->agent_id, summon_elite->second});

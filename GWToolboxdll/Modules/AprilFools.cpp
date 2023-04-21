@@ -30,8 +30,8 @@ namespace {
             return;
         if ((packet->agent_type & 0x30000000) != 0x30000000)
             return; // Not a player
-        uint32_t player_number = packet->agent_type ^ 0x30000000;
-        GW::AgentLiving* agent = (GW::AgentLiving*)GW::Agents::GetAgentByID(GW::Agents::GetAgentIdByLoginNumber(player_number));
+        const uint32_t player_number = packet->agent_type ^ 0x30000000;
+        const auto agent = static_cast<GW::AgentLiving*>(GW::Agents::GetAgentByID(GW::Agents::GetAgentIdByLoginNumber(player_number)));
         if (!agent || !agent->GetIsLivingType() || !agent->IsPlayer())
             return; // Not a valid agent
         player_agents.emplace(agent->agent_id, agent);
@@ -39,7 +39,7 @@ namespace {
     void OnAgentRemove(GW::HookStatus*, GW::Packet::StoC::AgentRemove* packet) {
         if (!enabled)
             return;
-        auto found = player_agents.find(packet->agent_id);
+        const auto found = player_agents.find(packet->agent_id);
         if (found != player_agents.end())
             player_agents.erase(found);
     }

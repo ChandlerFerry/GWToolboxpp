@@ -47,8 +47,8 @@ public:
 
     static void CmdReroll(const wchar_t* message, int argc, LPWSTR* argv);
 
-    bool Reroll(wchar_t* character_name, bool same_map = true, bool same_party = true);
-    bool Reroll(wchar_t* character_name, GW::Constants::MapID _map_id);
+    bool Reroll(const wchar_t* character_name, bool same_map = true, bool same_party = true);
+    bool Reroll(const wchar_t* character_name, GW::Constants::MapID _map_id);
 private:
 
     bool travel_to_same_location_after_rerolling = true;

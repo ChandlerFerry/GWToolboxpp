@@ -29,9 +29,8 @@ void DoorMonitorWindow::Draw(IDirect3DDevice9* pDevice) {
     ImGui::SameLine(offset += colWidth); ImGui::Text("Last Close");
     ImGui::SameLine(offset += colWidth); ImGui::Text("Current State");
     ImGui::Separator();
-    std::map<uint32_t, DoorObject*>::iterator it;
     
-    for (it = doors.begin(); it != doors.end(); it++) {
+    for (auto it = doors.begin(); it != doors.end(); it++) {
         offset = 0.0f;
         DoorObject& o = *it->second;
         ImGui::PushID(o.object_id);

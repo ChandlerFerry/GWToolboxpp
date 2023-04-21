@@ -1450,7 +1450,7 @@ bool TravelWindow::ParseDistrict(const std::wstring &s, GW::Constants::District 
         return false;
     }
     // Shortcut words e.g "/tp ae" for american english
-    TravelWindow& instance = Instance();
+    const auto& instance = Instance();
     const auto& shorthand_outpost = instance.shorthand_district_names.find(m[1].str());
     if (shorthand_outpost == instance.shorthand_district_names.end()) {
         return false;

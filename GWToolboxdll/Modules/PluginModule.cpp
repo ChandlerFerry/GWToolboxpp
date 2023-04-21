@@ -242,16 +242,16 @@ void PluginModule::LoadSettings(ToolboxIni* ini)
     }
     // Find any plugins that are currently loaded but not supposed to be
     auto to_unload = std::views::filter(loaded_plugins, [&](auto plugin) {
-        return std::ranges::find(plugins_loaded_from_ini, plugin) == plugins_loaded_from_ini.end();
-        });
-    for (auto plugin : std::views::reverse(to_unload)) {
+        return !std::ranges::contains(plugins_loaded_from_ini, plugin);
+    });
+    for (const auto plugin : std::views::reverse(to_unload)) {
         UnloadPlugin(plugin);
     }
 }
 
 void PluginModule::SaveSettings(ToolboxIni* ini)
 {
-    ini->Delete(plugins_enabled_section,NULL);
+    ini->Delete(plugins_enabled_section, nullptr);
     for (const auto plugin : loaded_plugins) {
         plugin->instance->SaveSettings(pluginsfoldername);
         ini->SetBoolValue(plugins_enabled_section, plugin->path.filename().string().c_str(), plugin->active);

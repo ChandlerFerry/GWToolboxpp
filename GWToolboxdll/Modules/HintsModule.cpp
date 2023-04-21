@@ -120,10 +120,10 @@ namespace {
     constexpr TBHint HEROS_HANDBOOK = { 0x2000008, L"Talk to Gedrel of Ascalon in Eye of the North to get a Hero's Handbook and Master Dungeon Guide." };
     constexpr TBHint BLACK_WIDOW_CHARM = { 0x2000009, L"If you're planning to charm a Black Widow, remember to flag your heroes away so they don't kill it." };
 
-    static bool only_show_hints_once = false;
-    static GW::HookEntry hints_entry;
+    bool only_show_hints_once = false;
+    GW::HookEntry hints_entry;
 
-    static void OnObjectiveComplete_UIMessage(GW::HookStatus*, GW::UI::UIMessage, void* wparam, void*) {
+    void OnObjectiveComplete_UIMessage(GW::HookStatus*, GW::UI::UIMessage, void* wparam, void*) {
         uint32_t objective_id = *(uint32_t*)wparam;
         if (objective_id == 150
             && GW::Map::GetMapID() == GW::Constants::MapID::The_Underworld
@@ -132,14 +132,16 @@ namespace {
             HintUIMessage(BLACK_WIDOW_CHARM).Show();
         }
     }
-    static void OnStartMapLoad_UIMessage(GW::HookStatus*, GW::UI::UIMessage, void*, void*) {
+
+    void OnStartMapLoad_UIMessage(GW::HookStatus*, GW::UI::UIMessage, void*, void*) {
         if (GW::Map::GetIsInCinematic() && GW::Map::GetMapID() == GW::Constants::MapID::Cinematic_Eye_Vision_A) {
             HintUIMessage(HEROS_HANDBOOK).Delay(1000);
         }
     }
-    static void OnShowHint_UIMessage(GW::HookStatus* status, GW::UI::UIMessage, void* wparam, void*) {
-        HintUIMessage* msg = (HintUIMessage*)wparam;
-        if (std::ranges::find(hints_shown, msg->message_id) != hints_shown.end()) {
+
+    void OnShowHint_UIMessage(GW::HookStatus* status, GW::UI::UIMessage, void* wparam, void*) {
+        const auto msg = static_cast<HintUIMessage*>(wparam);
+        if (std::ranges::contains(hints_shown, msg->message_id)) {
             if (only_show_hints_once)
                 status->blocked = true;
         }
@@ -148,7 +150,7 @@ namespace {
         }
     }
 
-    static void OnMapLoaded_UIMessage(GW::HookStatus*, GW::UI::UIMessage, void*, void*) {
+    void OnMapLoaded_UIMessage(GW::HookStatus*, GW::UI::UIMessage, void*, void*) {
         uint32_t endgame_msg_idx = 0;
         switch (GW::Map::GetMapID()) {
         case GW::Constants::MapID::Embark_Beach: {
@@ -183,19 +185,22 @@ namespace {
             HintUIMessage(CHARM_ANIMAL).Show();
         }
     }
-    static void OnWriteToChatLog_UIMessage(GW::HookStatus*, GW::UI::UIMessage, void* wparam, void*) {
+
+    void OnWriteToChatLog_UIMessage(GW::HookStatus*, GW::UI::UIMessage, void* wparam, void*) {
         GW::UI::UIChatMessage* msg = (GW::UI::UIChatMessage*)wparam;
         if (msg->channel == GW::Chat::Channel::CHANNEL_GLOBAL && wcsncmp(msg->message, L"\x8101\x4793\xfda0\xe8e2\x6844", 5) == 0) {
             HintUIMessage(HINT_HERO_EXP).Show();
         }
     }
-    static void OnShowXunlaiChest_UIMessage(GW::HookStatus*, GW::UI::UIMessage, void*, void*) {
+
+    void OnShowXunlaiChest_UIMessage(GW::HookStatus*, GW::UI::UIMessage, void*, void*) {
         GW::AgentLiving* chest = GW::Agents::GetTargetAsAgentLiving();
         if (chest && chest->player_number == 5001 && GW::GetDistance(GW::Agents::GetPlayer()->pos, chest->pos) < GW::Constants::Range::Nearby) {
             HintUIMessage(CHEST_CMD).Show();
         }
     }
-    static void OnQuestAdded_UIMessage(GW::HookStatus*, GW::UI::UIMessage, void* wparam, void*) {
+
+    void OnQuestAdded_UIMessage(GW::HookStatus*, GW::UI::UIMessage, void* wparam, void*) {
         uint32_t quest_id = *(uint32_t*)wparam; // NB: wParam is just a pointer to packet content for QuestAdded
         switch (quest_id) {
         case 56: // Adventure with an ally
@@ -203,7 +208,8 @@ namespace {
             break;
         }
     }
-    static void OnQuotedItemPrice_UIMessage(GW::HookStatus*, GW::UI::UIMessage, void* wparam, void*) {
+
+    void OnQuotedItemPrice_UIMessage(GW::HookStatus*, GW::UI::UIMessage, void* wparam, void*) {
         clock_t _now = clock();
         LastQuote* q = (LastQuote*)wparam;
         if (last_quote.item_id == q->item_id && _now - last_quoted_item_timestamp < 5 * CLOCKS_PER_SEC) {
@@ -212,7 +218,8 @@ namespace {
         last_quote = *q;
         last_quoted_item_timestamp = _now;
     }
-    static void OnShowPvpWindowContent_UIMessage(GW::HookStatus*, GW::UI::UIMessage, void*, void*) {
+
+    void OnShowPvpWindowContent_UIMessage(GW::HookStatus*, GW::UI::UIMessage, void*, void*) {
         HintUIMessage(HINT_Q9_STR_SHIELDS).Show();
     }
 }
@@ -234,7 +241,7 @@ void HintsModule::Update(float) {
     if (!delayed_hints.empty()
         && GW::Map::GetInstanceType() != GW::Constants::InstanceType::Loading
         && GW::Agents::GetPlayer()) {
-        clock_t _now = clock();
+        const auto _now = clock();
         for (auto it = delayed_hints.begin(); it != delayed_hints.end(); it++) {
             if (it->first < _now) {
                 it->second->Show();

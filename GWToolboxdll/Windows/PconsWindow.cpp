@@ -292,7 +292,7 @@ void PconsWindow::OnSpeechBubble(GW::HookStatus* status, GW::Packet::StoC::Speec
         L"\x8102\x492B\xC39F\xD6FA",
         L"\x8102\x4923\xAA60\x9F98",    // end grog messages
     };
-    if (std::ranges::find(msgs, msg) != std::ranges::end(msgs)) {
+    if (std::ranges::contains(msgs, msg)) {
         status->blocked = true;
     }
 

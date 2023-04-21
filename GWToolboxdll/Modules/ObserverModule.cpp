@@ -1168,7 +1168,7 @@ ObserverModule::ObservableSkill* ObserverModule::CreateObservableSkill(const GW:
 // Lazy load an ObservableParty using a PartyInfo
 ObserverModule::ObservableParty* ObserverModule::GetObservablePartyByPartyInfo(const GW::PartyInfo& party_info) {
     // lazy load
-    auto it_observable_party = observable_parties.find(party_info.party_id);
+    const auto it_observable_party = observable_parties.find(party_info.party_id);
     // found
     if (it_observable_party != observable_parties.end()) return it_observable_party->second;
 

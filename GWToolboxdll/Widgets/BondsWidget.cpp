@@ -282,7 +282,7 @@ bool BondsWidget::FetchBondSkills()
     bond_map.clear();
     for (const auto& skill : bar->skills) {
         auto skill_id = static_cast<GW::Constants::SkillID>(skill.skill_id);
-        if (std::ranges::find(skills, skill_id) != skills.end()) {
+        if (std::ranges::contains(skills, skill_id)) {
             bond_map[skill_id] = bond_list.size();
             bond_list.push_back(skill_id);
         }

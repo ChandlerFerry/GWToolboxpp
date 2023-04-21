@@ -1273,7 +1273,7 @@ void ObjectiveTimerWindow::ObjectiveSet::CheckSetDone()
     if (!std::ranges::any_of(objectives, [](const Objective* obj) { return obj->done == TIME_UNKNOWN; })) {
         duration = GetDuration();
         // make sure there isn't an objective finishing later
-        const auto max = std::max_element(objectives.begin(), objectives.end(),
+        const auto max = std::ranges::max_element(objectives,
             [](const Objective* a, const Objective* b) { return a->done < b->done; });
         duration = std::max((*max)->done, duration);
         active = false;
@@ -1287,13 +1287,13 @@ void ObjectiveTimerWindow::ObjectiveSet::CheckSetDone()
 ObjectiveTimerWindow::ObjectiveSet::ObjectiveSet()
     : ui_id(cur_ui_id++)
 {
-    system_time = static_cast<DWORD>(time(NULL));
+    system_time = static_cast<DWORD>(time(nullptr));
     run_start_time_point = TimerWidget::Instance().GetStartPoint() != TIME_UNKNOWN ? TimerWidget::Instance().GetStartPoint() : time_point_ms();
     duration = TIME_UNKNOWN;
 }
 ObjectiveTimerWindow::ObjectiveSet::~ObjectiveSet() {
-    for (auto* obj : objectives) {
-        if (obj) delete obj;
+    for (const auto obj : objectives) {
+        delete obj;
     }
     objectives.clear();
 }
@@ -1309,7 +1309,7 @@ ObjectiveTimerWindow::ObjectiveSet* ObjectiveTimerWindow::ObjectiveSet::FromJson
     if(json.contains("duration"))
         os->duration = json.at("duration").get<DWORD>();
     nlohmann::json json_objs = json.at("objectives");
-    for (nlohmann::json::iterator it = json_objs.begin(); it != json_objs.end(); ++it) {
+    for (auto it = json_objs.begin(); it != json_objs.end(); ++it) {
         const nlohmann::json& o = it.value();
         os->objectives.emplace_back(Objective::FromJson(o));
     }

@@ -458,7 +458,7 @@ const std::string FriendListWindow::Friend::GetCharactersHover(bool include_char
         std::wstring cached_charnames_hover_ws = L"Characters for ";
         cached_charnames_hover_ws += alias;
         cached_charnames_hover_ws += L":";
-        for (std::unordered_map<std::wstring, Character>::iterator it2 =
+        for (auto it2 =
                  characters.begin();
              it2 != characters.end(); ++it2) {
             cached_charnames_hover_ws += L"\n  ";
@@ -686,7 +686,7 @@ void FriendListWindow::Poll() {
 
 
     // 1. Remove friends from toolbox list that are no longer in gw list
-    std::unordered_map<std::string, Friend*>::iterator it = friends.begin();
+    auto it = friends.begin();
     while (it != friends.end()) {
         Friend* lf = it->second;
         if (lf->GetFriend()) {
@@ -1011,8 +1011,7 @@ void FriendListWindow::LoadCharnames(const char* section, std::unordered_map<std
     // Grab char names
     CSimpleIni::TNamesDepend values;
     inifile->GetAllValues(section, "charname", values);
-    CSimpleIni::TNamesDepend::const_iterator i;
-    for (i = values.begin(); i != values.end(); ++i) {
+    for (auto i = values.cbegin(); i != values.cend(); ++i) {
         std::wstring char_wstr = GuiUtils::StringToWString(i->pItem), temp;
         std::vector<std::wstring> parts;
         std::wstringstream wss(char_wstr);
@@ -1021,7 +1020,7 @@ void FriendListWindow::LoadCharnames(const char* section, std::unordered_map<std
         std::wstring name = parts[0];
         uint8_t profession = 0;
         if (parts.size() > 1) {
-            int p = _wtoi(&parts[1][0]);
+            const int p = _wtoi(&parts[1][0]);
             if (p > 0 && p < 11)
                 profession = (uint8_t)p;
         }
